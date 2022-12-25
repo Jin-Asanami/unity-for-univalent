@@ -1,0 +1,56 @@
+# Maintainer:  Rudra Saraswat <rs2009[at]ubuntu[dot]com>
+# Contributor: Robin Candau <robincandau[at]protonmail[dot]com>
+# Contributor: Xiao-Long Chen <chenxiaolong@cxl.epac.to>
+# Contributor: Jan de Groot <jgc@archlinux.org>
+# Contributor: thn81 <root@scrat>
+
+pkgname=gnome-settings-daemon-ubuntu
+pkgver=43.0_1ubuntu1
+_pkgver="${pkgver//_*ubuntu*/}"
+_commit=7bde651053bdf18fe66cbd4ce697cb97a6ea556b
+pkgrel=1
+pkgdesc="GNOME Settings Daemon"
+arch=(i686 x86_64)
+url="https://git.gnome.org/browse/gnome-settings-daemon"
+license=(GPL)
+groups=(gnome unity)
+depends=(dconf gnome-desktop gsettings-desktop-schemas-ubuntu libcanberra-pulse
+         libnotify systemd libwacom pulseaudio pulseaudio-alsa upower librsvg
+         libgweather-4 geocode-glib geoclue nss libgudev gtk3-ubuntu libnm gcr)
+makedepends=(libxslt docbook-xsl python git meson usbguard gcr-4)
+provides=("gnome-settings-daemon=${pkgver}")
+conflicts=(gnome-settings-daemon)
+source=("git+https://github.com/GNOME/gnome-settings-daemon.git#commit=${_commit}"
+        "git+https://github.com/GNOME/libgnome-volume-control.git"
+	"https://launchpad.net/ubuntu/+archive/primary/+files/gnome-settings-daemon_${pkgver//_/-}.debian.tar.xz")
+sha256sums=('SKIP'
+            'SKIP'
+            'b3a27e855b075032250a0c3fe6d0baf77e1dc9b07891b7ca3a790937e864315c')
+
+pkgver() {
+    cd "${pkgname%-*}"
+    git describe --tags | sed 's/^GNOME_SETTINGS_DAEMON_//;s/_/./g;s/-/+/g'
+}
+
+prepare() {
+    cd "${pkgname%-*}"
+
+    git submodule init
+    git config --local submodule."panels/media-keys/gvc".url "${srcdir}/libgnome-volume-control"
+    git -c protocol.file.allow=always submodule update
+
+    # Apply Ubuntu's patches
+    patch -p1 -i ../debian/patches/ubuntu/lid-close-suspend-support.patch
+}
+
+build() {
+    cd "${pkgname%-*}"
+
+    meson --prefix=/usr --buildtype=plain . build
+    meson compile -C build
+}
+
+package() {
+    cd "${pkgname%-*}"
+    meson install -C build --destdir "${pkgdir}"
+}

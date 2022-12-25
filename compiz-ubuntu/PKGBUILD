@@ -1,0 +1,109 @@
+# Maintainer:  Rudra Saraswat <rs2009[at]ubuntu[dot]com>
+# Contributor: Robin Candau <robincandau[at]protonmail[dot]com>
+# Contributor: Xiao-Long Chen <chenxiaolong@cxl.epac.to>
+
+pkgname=compiz-ubuntu
+pkgver=0.9.14.2+22.10.20220822_0ubuntu1
+_pkgver="1:${pkgver}"
+pkgrel=1
+epoch=1
+pkgdesc="OpenGL window and compositing manager"
+arch=(i686 x86_64)
+url="http://www.compiz.org/"
+license=(GPL LGPL MIT)
+groups=(unity)
+depends=(boost-libs dbus fuse glibmm glu librsvg libxcomposite libxdamage
+         libxinerama libxrandr libxslt libwnck3 mesa metacity
+         startup-notification protobuf pygtk gsettings-desktop-schemas gnome-settings-daemon)
+makedepends=(boost cmake intltool coreutils patchelf cython)
+optdepends=('unity-control-center: Unity Control Center')
+provides=(compiz-core compiz)
+conflicts=(compiz metacity-ubuntu)
+options=(!strip !docs libtool emptydirs)
+source=("https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/compiz/${_pkgver//_/-}/compiz_${pkgver//_/-}.tar.xz"
+	 compiz.reset
+         0001-Fix-cmake-install-directory.patch
+         0002-Fix-python-install-command.patch
+         0003-Use-Python-2.patch
+         0004-Disable-Werror.patch)
+sha256sums=('e047f0340c16bcedf8e2a8a24ec13b7183681874f06c4a275ec8181326f6176a'
+            '7a5024647a074454833d9b01ea92ff75051a765319cc014b52d056e0e77500e1'
+            'fa1ab954f470bfc91e7ed18356a89bd925ad744ae633b3f9f2dcef3c39081e90'
+            '6b874c9f52d6bc6ca2c192b15bbd63b86aa11efc3a57e222717ab151ae088f2c'
+            '16aa7800e4a1915cd305746599bc5c786d1b6fd994daf7423adf08db57cd1bdf'
+            '526afdab51a4290a9a3a3e34a6507ca476a96a30e01b60de4ee05aff00032803')
+
+prepare() {
+    cd compiz
+
+    # Fix the directory for FindCompiz.cmake and FindCompizConfig.cmake
+    patch -p1 -i ../0001-Fix-cmake-install-directory.patch
+
+    # Don't treat warnings as errors
+    patch -p1 -i ../0004-Disable-Werror.patch
+
+    for i in $(grep -v '#' debian/patches/series); do
+        msg "Applying ${i}"
+        patch -p1 -i "debian/patches/${i}"
+    done
+}
+
+build() {
+    cd compiz
+
+    # Fix build on i686
+    export CXXFLAGS+=" -lc"
+
+    # Disable '-Bsymbolic-functions' if present so libcompiz_core won't be
+    # loaded once per plugin
+    export LDFLAGS="$(echo ${LDFLAGS} | sed 's/-B[ ]*symbolic-functions//')"
+
+    # Disable rpath in Python 2 bindings
+    export COMPIZ_DISABLE_RPATH=1
+
+    # Compiz will segfault if the CMake built target is set to 'Release'
+    # Disable tests since they can't run on a headless build server
+
+    [[ -d build ]] && rm -rvf build/
+    mkdir build/
+    cd build/
+    cmake .. \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DCOMPIZ_BUILD_WITH_RPATH=FALSE \
+        `# -DCMAKE_BUILD_TYPE=RelWithDebInfo` \
+        -DCMAKE_BUILD_TYPE=Debug \
+        -DCOMPIZ_PACKAGING_ENABLED=TRUE \
+        -DUSE_GSETTINGS=ON \
+        -DCOMPIZ_DISABLE_GS_SCHEMAS_INSTALL=OFF \
+        -DCOMPIZ_BUILD_TESTING=OFF \
+        -DCOMPIZ_DISABLE_PLUGIN_KDE=ON \
+        -DUSE_KDE4=OFF \
+        `# Necessary for new versions of Compiz` \
+        `# https://bugs.launchpad.net/compiz/+bug/1070211` \
+        -DPYTHON_INCLUDE_DIR=/usr/include/python2.7 \
+        -DPYTHON_LIBRARY=/usr/lib/libpython2.7.so \
+        -Dlibdir=/usr/lib \
+        -Dlibcompizconfig_libdir=/usr/lib
+
+    make -j$(nproc)
+}
+
+package() {
+    cd compiz/build
+    make install DESTDIR="${pkgdir}"
+
+    CMAKE_DIR=$(cmake --system-information | grep '^CMAKE_ROOT' \
+        | awk -F\" '{print $2}')
+
+    install -Dm 644 ../cmake/FindCompiz.cmake "${pkgdir}${CMAKE_DIR}/Modules/FindCompiz.cmake"
+
+    desktop-file-install                            \
+        --delete-original                           \
+        --dir=${pkgdir}/usr/share/applications      \
+        ${pkgdir}/usr/share/applications/*.desktop
+
+    mkdir -p %{buildroot}%{_datadir}/compiz/icons/hicolor/{scalable/{apps,\
+        categories},22x22/{categories,devices,mimetypes}}
+    
+    install -Dm 644 ../COPYING.MIT "${pkgdir}/usr/share/licenses/${pkgname}/COPYING.MIT"
+}

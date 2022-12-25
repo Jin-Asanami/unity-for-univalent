@@ -1,0 +1,31 @@
+# Maintainer:  Rudra Saraswat <rs2009[at]ubuntu[dot]com>
+# Contributor: Robin Candau <robincandau[at]protonmail[dot]com>
+# Contributor: Ivan Semkin (ivan at semkin dot ru)
+# Contributor: Cody P Schafer <archlinux at codyps.com>
+# Contributor: Jameson Pugh <imntreal@gmail.com>
+
+pkgname=dbus-test-runner
+pkgver=19.04.0_1
+_pkgver="${pkgver//_*/}"
+pkgrel=1
+pkgdesc='A small little utility to run a couple of executables under a new DBus session for testing'
+arch=(x86_64 i686 armv7h aarch64)
+url='https://launchpad.net/dbus-test-runner'
+license=(GPL3)
+depends=(dbus-glib)
+makedepends=(gnome-common)
+source=("https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/dbus-test-runner/${pkgver//_/-}/dbus-test-runner_${_pkgver}.orig.tar.gz")
+sha256sums=('645a32fbd909baf2c01438f0cbda29dc9cd01a7aba5504c45610d88e8a57cb76')
+
+build() {
+  cd "${srcdir}/${pkgname}-${_pkgver}"
+  export CFLAGS="${CFLAGS:-} -Wno-error"
+  export CXXFLAGS="${CXXFLAGS:-} -Wno-error"
+  ./configure --prefix=/usr
+  make
+}
+
+package() {
+  cd "${srcdir}/${pkgname}-${_pkgver}"
+  make DESTDIR="${pkgdir}" install
+}

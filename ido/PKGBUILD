@@ -1,0 +1,37 @@
+# Maintainer:  Rudra Saraswat <rs2009[at]ubuntu[dot]com>
+# Contributor: Robin Candau <robincandau[at]protonmail[dot]com>
+# Contributor: Xiao-Long Chen <chenxiaolong@cxl.epac.to>
+# Contributor: György Balló <ballogy@freestart.hu>
+# Contributor: thn81 <root@scrat>
+
+pkgname=ido
+pkgver=13.10.0+22.10.20221007_0ubuntu1
+_pkgver="${pkgver//_*ubuntu*/}"
+pkgrel=1
+epoch=1
+pkgdesc="Widgets and other objects used for indicators"
+arch=(i686 x86_64)
+url="https://launchpad.net/ido"
+license=(LGPL LGPL3)
+groups=(unity)
+depends=(gtk3-ubuntu)
+makedepends=(gobject-introspection gtk-doc vala xorg-util-macros)
+source=("https://launchpad.net/ubuntu/+archive/primary/+files/ido_${_pkgver}.orig.tar.gz"
+        0001-Temporarily-disable-previous-button-drop-shadow-draw.patch)
+sha256sums=('660b4feae9a6c8c7ba76251c3636c53c539cc2c287f9272fe2ec81d97a96c241'
+            '735fdec1318655026840686d8c581cdd87d7aefed8b6ea8ea53901d3c903ed88')
+
+prepare() {
+    patch -p1 -i 0001-Temporarily-disable-previous-button-drop-shadow-draw.patch
+}
+
+build() {
+    export CFLAGS+=" -Wno-error"
+    autoreconf -vfi
+    ./configure --prefix=/usr --disable-static --disable-introspection
+    make
+}
+
+package() {
+    make DESTDIR="${pkgdir}" install
+}

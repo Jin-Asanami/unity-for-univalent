@@ -1,0 +1,36 @@
+# Maintainer:  Rudra Saraswat <rs2009[at]ubuntu[dot]com>
+# Contributor: Robin Candau <robincandau[at]protonmail[dot]com>
+# Contributor: Xiao-Long Chen <chenxiaolong@cxl.epac.to>
+# Contributor: thn81 <root@scrat>
+
+pkgname=frame
+pkgver=2.5.0daily13.06.05+16.10.20160809_0ubuntu3
+_pkgver="${pkgver//_*ubuntu*/}"
+pkgrel=1
+epoch=2
+pkgdesc="Touch Frame Library"
+arch=(i686 x86_64)
+url="https://launchpad.net/frame"
+license=(GPL3 LGPL3)
+groups=(unity)
+depends=(libxi)
+makedepends=(asciidoc xorg-server-devel)
+options=(!emptydirs)
+source=("https://launchpad.net/ubuntu/+archive/primary/+files/frame_${_pkgver}.orig.tar.gz"
+        "https://launchpad.net/ubuntu/+archive/primary/+files/frame_${pkgver//_/-}.diff.gz")
+sha256sums=('c652b4df092eda1ef011b5d80d47f193496de2968857cccd036cb958a8ababa5'
+            '8fe67b9da265929a386b1b87ee90e7e5250751d4c1b044455e5bfb38f0ef2b35')
+
+prepare() {
+    patch -p1 -i "${pkgname}_${pkgver//_/-}.diff"
+}
+
+build() {
+    autoreconf -vfi
+    ./configure --prefix=/usr --disable-static
+    make
+}
+
+package() {
+    make DESTDIR="${pkgdir}" install
+}

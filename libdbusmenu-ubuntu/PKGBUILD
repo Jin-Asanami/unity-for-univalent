@@ -1,0 +1,70 @@
+# Maintainer:  Rudra Saraswat <rs2009[at]ubuntu[dot]com>
+# Contributor: Robin Candau <robincandau[at]protonmail[dot]com>
+# Contributor: Xiao-Long Chen <chenxiaolong@cxl.epac.to>
+# Contributor: György Balló <ballogy@freestart.hu>
+# Contributor: thn81 <root@scrat>
+
+pkgbase=libdbusmenu-ubuntu
+pkgname=(libdbusmenu-glib-ubuntu libdbusmenu-gtk3-ubuntu)
+pkgver=16.04.1+22.10.20220928.1_0ubuntu1
+_pkgver="${pkgver//_*ubuntu*/}"
+pkgrel=1
+epoch=1
+pkgdesc="A small little library that was created by pulling out some comon code out of indicator-applet"
+arch=(i686 x86_64)
+url="https://launchpad.net/dbusmenu"
+license=(LGPL LGPL3 GPL3)
+groups=(unity)
+makedepends=(json-glib gtk2 gtk3 intltool gtk-doc gobject-introspection vala valgrind)
+source=("https://launchpad.net/ubuntu/+archive/primary/+files/libdbusmenu_${_pkgver}.orig.tar.gz"
+        0001_autoconf.patch)
+sha256sums=('06a3279d431bec21f1b402afb8e29a534a07db5f53295ba2d22bf9e0b73e03e6'
+            '742e60902b41e7500bd229501c6e711ca396bfbb26f98a5263cff8801031a6ff')
+
+prepare() {
+    patch -p1 -i 0001_autoconf.patch
+}
+
+build() {
+    export CFLAGS+=" -Wno-error"
+
+    gtkdocize
+    autoreconf -vfi
+    intltoolize -f
+
+    # libdbusmenu-gtk2 won't install if libdbusmenu-glib is missing
+    sed -i 's|$(DBUSMENUGTK_CFLAGS)|$(DBUSMENUGTK_CFLAGS) -L../libdbusmenu-glib/.libs|' libdbusmenu-gtk/Makefile.{am,in}
+
+    [[ -d build-gtk3 ]] || mkdir build-gtk3
+    pushd build-gtk3
+    ../configure --prefix=/usr --libexecdir=/usr/lib/libdbusmenu --disable-scrollkeeper --with-gtk=3 --disable-static
+    make
+    popd
+}
+
+package_libdbusmenu-glib-ubuntu() {
+    depends=(json-glib)
+    provides=(libdbusmenu-glib)
+    replaces=(libdbusmenu-glib)
+    conflicts=(libdbusmenu-glib)
+
+    cd build-gtk3
+
+    make -j1 -C libdbusmenu-glib DESTDIR="${pkgdir}" install
+    make -j1 -C tools DESTDIR="${pkgdir}" install
+    make -j1 -C tests DESTDIR="${pkgdir}" install
+    make -j1 -C docs/libdbusmenu-glib DESTDIR="${pkgdir}" install
+    make -j1 -C po DESTDIR="${pkgdir}" install
+}
+
+package_libdbusmenu-gtk3-ubuntu() {
+    pkgdesc+=" (GTK+ 3 library)"
+    depends=(gtk3 libdbusmenu-glib-ubuntu)
+    provides=(libdbusmenu-gtk3)
+    replaces=(libdbusmenu-gtk3)
+    conflicts=(libdbusmenu-gtk3)
+
+    cd build-gtk3
+
+    make -j1 -C libdbusmenu-gtk DESTDIR="${pkgdir}" install
+}

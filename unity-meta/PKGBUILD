@@ -1,0 +1,21 @@
+# Maintainer: Hayate Nakamura <is01.njb@gmail.com>
+# Contributor: Rudra Saraswat <rs2009@ubuntu.com>
+
+pkgname=unity-meta
+pkgver=1
+pkgrel=7
+pkgdesc='Metapackage for Unity on UVGL'
+url='https://unity.ubuntuunity.org'
+arch=('any')
+license=('GPL')
+depends=(
+  unity compiz-ubuntu nux unity-session libindicator-common libayatana-appindicator
+  indicator-application indicator-bluetooth indicator-keyboard xorg-server
+  indicator-power indicator-session indicator-appmenu indicator-datetime indicator-messages
+  indicator-printers indicator-sound lightdm-ubuntu lightdm-unity-greeter gtk3-ubuntu
+  unity-scope-home unity-lens-applications unity-lens-files unity-lens-music unity-lens-photos
+  unity-lens-video unity-settings unity-indicator-appearance gnome-terminal bluez chromium nemo
+  libreoffice unity-tweak-tool gnome-screenshot gedit eom atril xf86-input-synaptics engrampa
+  zeitgeist-ubuntu unity-settings-daemon gnome-settings-daemon-ubuntu gsettings-desktop-schemas-ubuntu
+  gsettings-ubuntu-schemas gtk3-ubuntu lightdm-ubuntu unity-gtk-module
+)

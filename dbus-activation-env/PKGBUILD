@@ -1,0 +1,18 @@
+# Maintainer:  Rudra Saraswat <rs2009[at]ubuntu[dot]com>
+# Contributor: Robin Candau <robincandau[at]protonmail[dot]com>
+# Contributor: Andrew Gunnerson <andrewgunnerson@gmail.com>
+
+pkgname=dbus-activation-env
+pkgver=1.14.0_2ubuntu3
+pkgrel=1
+pkgdesc="Set session variables in dbus/systemd activation environment"
+arch=(any)
+url="https://launchpad.net/ubuntu/+source/dbus"
+license=(GPL)
+depends=(dbus)
+source=("https://launchpad.net/ubuntu/+archive/primary/+files/dbus_${pkgver//_/-}.debian.tar.xz")
+sha256sums=('4e10e7cc0411984815ad6da29831b906b2ee08748893441f104332fc518230d1')
+
+package() {
+    install -Dm 755 debian/95dbus_update-activation-env "${pkgdir}/etc/X11/xinit/xinitrc.d/95dbus_update-activation-env"
+}

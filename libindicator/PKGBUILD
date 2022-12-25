@@ -1,0 +1,70 @@
+# Maintainer:  Rudra Saraswat <rs2009[at]ubuntu[dot]com>
+# Contributor: Robin Candau <robincandau[at]protonmail[dot]com>
+# Contributor: Xiao-Long Chen <chenxiaolong@cxl.epac.to>
+# Contributor: György Balló <ballogy@freestart.hu>
+# Contributor: thn81 <root@scrat>
+
+pkgbase=libindicator
+pkgname=(libindicator-common libindicator-gtk2 libindicator-gtk3)
+pkgver=16.10.0+18.04.20180321.1_0ubuntu5
+_pkgver="${pkgver//_*ubuntu*/}"
+pkgrel=1
+epoch=1
+pkgdesc="A set of symbols and convience functions that all indicators would like to use"
+arch=(i686 x86_64)
+url="https://launchpad.net/libindicator"
+license=(GPL3)
+groups=(unity)
+makedepends=(gtk2 gtk3 glib2 ido)
+source=("https://launchpad.net/ubuntu/+archive/primary/+files/${pkgbase}_${_pkgver}.orig.tar.gz")
+sha256sums=('0029ac3aa8d5a339de252f66209b40c12e5bfa9072221b9b32d07844273f62fd')
+
+build() {
+    export CFLAGS+=" -Wno-error"
+
+    autoreconf -vfi
+
+    [[ -d build-gtk2 ]] || mkdir build-gtk2
+    pushd build-gtk2
+    ../configure --prefix=/usr --libexecdir=/usr/lib/${pkgbase} --with-gtk=2 --disable-static
+    make -j1
+    popd
+
+    [[ -d build-gtk3 ]] || mkdir build-gtk3
+    pushd build-gtk3
+    ../configure --prefix=/usr --libexecdir=/usr/lib/${pkgbase} --with-gtk=3 --disable-static
+    make
+    popd
+}
+
+package_libindicator-common() {
+    pkgdesc+=" (common files)"
+
+    cd build-gtk3
+
+    make -j1 -C data DESTDIR="${pkgdir}" install
+}
+
+package_libindicator-gtk2() {
+    pkgdesc+=" (GTK+ 2 library)"
+    depends=(cairo gtk2 glib2)
+
+    cd build-gtk2
+
+    make -j1 -C "${pkgbase}" DESTDIR="${pkgdir}" install
+    make -j1 -C tools DESTDIR="${pkgdir}" install
+}
+
+package_libindicator-gtk3() {
+    pkgdesc+=" (GTK+ 3 library)"
+    depends=(gtk3 glib2 ido)
+    options+=(!emptydirs)
+
+    cd build-gtk3
+
+    make -j1 -C "${pkgbase}" DESTDIR="${pkgdir}" install
+    make -j1 -C tools DESTDIR="${pkgdir}" install
+
+    # Identical in both packages, but Ubuntu puts it in the GTK 2 package
+    rm -vf "${pkgdir}/usr/share/${pkgbase}/80indicator-debugging"
+}

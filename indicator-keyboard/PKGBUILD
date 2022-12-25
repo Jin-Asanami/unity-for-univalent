@@ -1,0 +1,54 @@
+# Maintainer:  Rudra Saraswat <rs2009[at]ubuntu[dot]com>
+# Contributor: Robin Candau <robincandau[at]protonmail[dot]com>
+# Contributor: Xiao-Long Chen <chenxiaolong@cxl.epac.to>
+
+pkgname=indicator-keyboard
+pkgver=0.0.0+19.10.20220803_0ubuntu1
+_pkgver="${pkgver//_*ubuntu*/}"
+pkgrel=2
+pkgdesc="Indicator for switching keyboard layouts and input methods"
+arch=(i686 x86_64)
+url="https://launchpad.net/indicator-keyboard"
+license=(GPL3)
+groups=(unity)
+depends=(accountsservice fcitx5 gnome-desktop gucharmap ibus libgee libgnomekbd
+         lightdm-ubuntu unity-control-center)
+makedepends=(gobject-introspection intltool vala)
+conflicts=(ibus-ubuntu)
+source=("https://launchpad.net/ubuntu/+archive/primary/+files/indicator-keyboard_${_pkgver}.orig.tar.gz"
+        0002-Remove-code-depending-on-accountsservices-patch.patch
+        0003-Remove-unavailable-DBus-method-activate_input_source.patch
+        0004-Remove-unavailable-DBus-method-xkeyboard-layouts.patch
+        0005-Spawn-ibus-daemon-at-startup.patch)
+sha256sums=('7916f3827408bd7cb82856c931b807c4b8a69efe0c165d05db17942e2f982b5a'
+            '09317d1a25e7e702e8ed1a3e0e637f5db69c2a0a1d2bcbafb002a46cf61fc2c5'
+            'ee0542eaede9de9869f635b6af4cd588b74b688249fcc7d5f47ed40985a368cf'
+            'a0c6bc8b50336d38743017d8e6d5dfa2a88a617e1c984212d0fdefe109197a4d'
+            '20ed5ff065d1559f0f7ae21c3b71766dbb9fb00bd48e66827d415f2beb4f5ca8')
+
+prepare() {
+    cd "${pkgname}-${_pkgver}"
+
+    patch -p1 -i ../0002-Remove-code-depending-on-accountsservices-patch.patch
+    patch -p1 -i ../0003-Remove-unavailable-DBus-method-activate_input_source.patch
+    patch -p1 -i ../0004-Remove-unavailable-DBus-method-xkeyboard-layouts.patch
+    patch -p1 -i ../0005-Spawn-ibus-daemon-at-startup.patch
+
+    sed -i "s/string\[\] layouts = null/string\[\] layouts = new string\[0\]/g" lib/main.vala
+
+    intltoolize -f
+    autoreconf -vfi
+}
+
+build() {
+    cd "${pkgname}-${_pkgver}"
+    ./configure --prefix=/usr --libexecdir=/usr/lib
+    make
+}
+
+package() {
+    cd "${pkgname}-${_pkgver}"
+    make DESTDIR="${pkgdir}" install
+
+    rm -rv "${pkgdir}/usr/share/upstart/"
+}

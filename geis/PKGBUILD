@@ -1,0 +1,36 @@
+# Maintainer:  Rudra Saraswat <rs2009[at]ubuntu[dot]com>
+# Contributor: Robin Candau <robincandau[at]protonmail[dot]com>
+# Contributor: Xiao-Long Chen <chenxiaolong@cxl.epac.to>
+
+pkgname=geis
+pkgver=2.2.17+16.04.20160126_0ubuntu8
+_pkgver="${pkgver//_*ubuntu*/}"
+pkgrel=1
+epoch=1
+pkgdesc="Implementation of the GEIS (Gesture Engine Interface and Support) interface."
+arch=(i686 x86_64)
+url="https://launchpad.net/geis"
+license=(GPL LGPL3)
+depends=(grail xorg-xinput python3 dbus)
+makedepends=(xorg-server xorg-server-devel)
+options=(!emptydirs)
+source=("https://launchpad.net/ubuntu/+archive/primary/+files/geis_${_pkgver}.orig.tar.gz"
+        "https://launchpad.net/ubuntu/+archive/primary/+files/geis_${pkgver//_/-}.diff.gz")
+sha256sums=('d88309cb4039e66c63ed95864b6cac8612c3b7138c26fab81440d694759c6df4'
+            '4710b2e4b66e99a441800ecc0ce0112212638ac219ab9138573dd180c5ebb543')
+
+build() {
+    cd "${pkgname}-${_pkgver}"
+
+    patch -p1 -i ../geis_${pkgver//_/-}.diff
+
+    autoreconf -vfi
+
+    ./configure --prefix=/usr --disable-static
+    make
+}
+
+package() {
+    cd "${pkgname}-${_pkgver}"
+    make DESTDIR="${pkgdir}" install
+}

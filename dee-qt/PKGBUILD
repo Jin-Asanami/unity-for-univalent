@@ -1,0 +1,28 @@
+# Maintainer:  Rudra Saraswat <rs2009[at]ubuntu[dot]com>
+# Contributor: Robin Candau <robincandau[at]protonmail[dot]com>
+# Contributor: Xiao-Long Chen <chenxiaolong@cxl.epac.to>
+
+pkgname=dee-qt
+pkgver=3.3+14.04.20140317_0ubuntu4
+_pkgver="${pkgver//_*ubuntu*/}"
+pkgrel=1
+pkgdesc="Qt5 bindings for dee"
+arch=(i686 x86_64)
+url="https://launchpad.net/dee-qt"
+license=(LGPL3)
+groups=(unity)
+depends=(dee-ubuntu qt5-base qt5-declarative)
+makedepends=(cmake)
+source=("https://launchpad.net/ubuntu/+archive/primary/+files/dee-qt_${_pkgver}.orig.tar.gz")
+sha256sums=('c372b6a5157a6614fae79bd4b75273f3ccdbde0f56e996211c000c5a3c74dfbb')
+
+build() {
+    cd "${pkgname}-${_pkgver}"
+    cmake . -DCMAKE_INSTALL_PREFIX=/usr -DWITHQT5=1
+    make
+}
+
+package() {
+    cd "${pkgname}-${_pkgver}"
+    make DESTDIR="${pkgdir}" install
+}

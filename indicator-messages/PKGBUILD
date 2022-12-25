@@ -1,0 +1,46 @@
+# Maintainer:  Rudra Saraswat <rs2009[at]ubuntu[dot]com>
+# Contributor: Robin Candau <robincandau[at]protonmail[dot]com>
+# Contributor: Xiao-Long Chen <chenxiaolong@cxl.epac.to>
+# Contributor: György Balló <ballogy@freestart.hu>
+# Contributor: thn81 <root@scrat>
+
+pkgname=indicator-messages
+pkgver=13.10.1+18.10.20180918_0ubuntu3
+_pkgver="${pkgver//_*ubuntu*/}"
+pkgrel=1
+epoch=1
+pkgdesc="A place on the user's desktop that collects messages that need a response"
+arch=(i686 x86_64)
+url="https://launchpad.net/indicator-messages"
+license=(GPL3)
+groups=(unity)
+depends=(accountsservice hicolor-icon-theme libindicator-gtk3)
+makedepends=(gobject-introspection gtk-doc intltool vala)
+source=("https://launchpad.net/ubuntu/+archive/primary/+files/indicator-messages_${_pkgver}.orig.tar.gz"
+        0001-autoconf-fix.patch
+        0002-Disable-tests.patch)
+sha256sums=('d051dd845912e2f5d6be5bfcbd9ce2c53460f011707d29ab728bee5f15938ce7'
+            '4dd5dc7425c2858bb50af1ec1e2e5b8e9f136664d72735e0128130d19c8c4736'
+            'c274d090bd95aeb937f09c40133af7727bc3624b102c9b75ed6a9b32083b2794')
+
+prepare() {
+    patch -p1 -i 0001-autoconf-fix.patch
+    patch -p1 -i 0002-Disable-tests.patch
+
+    gtkdocize
+    intltoolize -f
+    autoreconf -vfi
+}
+
+build() {
+    export CFLAGS="-Wno-error"
+    ./configure --prefix=/usr --libexecdir=/usr/lib --disable-static
+
+    make
+}
+
+package() {
+    make DESTDIR="${pkgdir}" install
+
+    rm -rv "${pkgdir}/usr/share/upstart/"
+}

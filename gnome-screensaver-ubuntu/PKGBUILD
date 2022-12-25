@@ -1,0 +1,114 @@
+# Maintainer:  Rudra Saraswat <rs2009[at]ubuntu[dot]com>
+# Contributor: Robin Candau <robincandau[at]protonmail[dot]com>
+# Contributor: Xiao-Long Chen <chenxiaolong@cxl.epac.to>
+# Contributor: Jan Alexander Steffens (heftig) <jan.steffens@gmail.com>
+# Contributor: Jan de Groot <jgc@archlinux.org>
+
+pkgname=gnome-screensaver-ubuntu
+pkgver=3.6.1_13ubuntu2
+_pkgver="${pkgver//_*ubuntu*/}"
+pkgrel=1
+pkgdesc="Screensaver designed to integrate well with the GNOME desktop."
+arch=(i686 x86_64)
+license=(GPL)
+url="http://live.gnome.org/GnomeScreensaver"
+backup=(etc/pam.d/gnome-screensaver)
+depends=(dbus-glib libgnomekbd gnome-desktop)
+makedepends=(intltool gnome-common)
+optdepends=('gnome-backgrounds: default background')
+provides=("gnome-screensaver=${_pkgver}")
+conflicts=(gnome-screensaver)
+groups=(unity)
+source=("http://ftp.gnome.org/pub/GNOME/sources/gnome-screensaver/${_pkgver%.*}/gnome-screensaver-${_pkgver}.tar.xz"
+        "https://launchpad.net/ubuntu/+archive/primary/+files/gnome-screensaver_${pkgver//_/-}.debian.tar.xz"
+        gnome-screensaver.pam
+        move-desktop-file.patch
+        fix-autoconf.patch
+        fix-systemd-support.patch
+        lock_screen_on_suspend.patch
+        lightdm_switch_user.patch
+        use-screensaver-background.patch
+        recenter.patch
+        0001-Update-libsystem-pkgconfig-dependency.patch)
+sha256sums=('f39b78d4f7fed748c7f0a31d694112fb907c6d3c4e63db22eb858df07e962cd0'
+            'c9966abc8ecde9b72e52ad68a9031b9e6518fb1061d1d591c6d07d862f2a6d88'
+	    'b6ea9e2eb586d94bcabb617a8f1c2958111df87afdbb51f645882bccdc15cbda'
+            '4bb96f62aa069c83b629204a79a3f63b146bcaf773569aee8b5dd23fbcd88974'
+            'c4da9c18b543ecbc781c1f103321b324a855bdd0979fd36b437f6033736ad4bb'
+            '8aa387578c1756e573f6558a66be25fc96d7e8567fb7bee580159479841f5f45'
+            '516c479558576c6c5a2509abfcbf4fdafb5953d252e7a4ab972f9db6137daca8'
+            '5d40bd6e1843150912dc52932eaa94c0f6d57931fd45a3769ef40e2335fe3c6f'
+            '7161ff962801d9e34ea564c372de4b5f93b30180b83c13aadbc9a8a1cd73ff65'
+            '6c428b9296376e4b5e2aaf503a754a1ba58333aab50c82279b7c5615d8dd9e69'
+            '122c22ba0a551ec98f398e5f57b7c35d52c69e0ac85364f4c9431d6ce6b02fda')
+
+prepare() {
+    cd "gnome-screensaver-${_pkgver}"
+
+    # Upstream patch that moves gnome-screensaver desktop file out of autostart
+    #patch -p1 -i ../move-desktop-file.patch
+
+    # Fix build
+    patch -p1 -i ../fix-autoconf.patch
+
+    # Fix systemd support
+    patch -p1 -i ../fix-systemd-support.patch
+
+    # Lock screen on suspend with systemd
+    patch -p1 -i ../lock_screen_on_suspend.patch
+
+    # Add support for user switch with LightDM
+    patch -p1 -i ../lightdm_switch_user.patch
+
+    # Honour background setting of the lock screen
+    patch -p1 -i ../use-screensaver-background.patch
+
+    # Restore the original position after shake
+    patch -p1 -i ../recenter.patch
+
+    # Update libsystemd pkgconfig dependency
+    patch -p1 -i ../0001-Update-libsystem-pkgconfig-dependency.patch
+
+    # Apply Ubuntu's patches
+    sed -i -e '/32_input_sources_switcher.patch/d' \
+           -e '/33_budgie_support.patch/d' \
+           -e '/00git_logind_check.patch/d' \
+           -e '/19_not_autostart_in_unity.patch/d' \
+           -e '/24_use_user_settings.patch/d' \
+           -e '/27_lightdm_switch_user.patch/d' \
+           -e '/libsystemd.patch/d' \
+           ../debian/patches/series
+
+    for i in $(grep -v '#' ../debian/patches/series); do
+        msg "Applying ${i}"
+        patch -p1 -i "../debian/patches/${i}"
+    done
+}
+
+build() {
+    cd "gnome-screensaver-${_pkgver}"
+
+    autoreconf -vfi
+
+    CFLAGS+=" -Wno-error=return-type"
+    ./configure \
+        --prefix=/usr \
+        --sysconfdir=/etc \
+        --localstatedir=/var \
+        --libexecdir=/usr/lib/gnome-screensaver \
+        --with-mit-ext \
+        --with-systemd \
+        --enable-locking # From debian/rules
+
+    make
+}
+
+package() {
+    cd "gnome-screensaver-${_pkgver}"
+
+    make DESTDIR="${pkgdir}" install
+    install -Dm644 ../gnome-screensaver.pam "${pkgdir}/etc/pam.d/gnome-screensaver"
+
+    # Use language packs
+    rm -r "${pkgdir}/usr/share/locale/"
+}

@@ -1,0 +1,47 @@
+# Maintainer: Hayate Nakamura <is01.njb at gmail.com>
+# Contributor: Xiao-Long Chen <chenxiaolong@cxl.epac.to>
+# Contributor: György Balló <ballogy@freestart.hu>
+# Contributor: thn81 <root@scrat>
+
+# vercheck-pkgbuild: auto
+# vercheck-ubuntu: name=${pkgname}, repo=yakkety
+# vercheck-launchpad: name=${pkgname}
+
+pkgname=unity-asset-pool
+_actual_ver=0.8.24
+_extra_ver=+17.10.20170507
+pkgver=${_actual_ver}${_extra_ver/\+/.}
+pkgrel=1
+epoch=1
+pkgdesc="Design assets for Unity"
+arch=(any)
+url="https://launchpad.net/unity-asset-pool"
+license=(GPL)
+depends=(gnome-icon-theme)
+makedepends=(icon-naming-utils)
+groups=(unity)
+source=("https://launchpad.net/ubuntu/+archive/primary/+files/unity-asset-pool_${_actual_ver}${_extra_ver}.orig.tar.gz"
+        uvgl-icon-tango-22.png
+        uvgl-icon-tango-24.png)
+sha512sums=('SKIP'
+            'c30a933c828ab73a42c289fb933a60118be44626bd2809013a189f517f044636ecec15245ebfa179caa01a688b0d9139618d3eb762fa452bfa13ac2e45a2c852'
+            'c7c3640bc49d24eec7858c9d950d471a3cb550c101a8beea437ec5eb4ea340cab981a0cb66cfe7151e7b6aec9585531397c1e8eef24ee2362b1f7e771c928672')
+
+package() {
+    install -dm755 "${pkgdir}/usr/share/unity/themes/"
+    install -m644 launcher/* "${pkgdir}/usr/share/unity/themes/"
+    install -m644 panel/* "${pkgdir}/usr/share/unity/themes/"
+
+    install -dm755 "${pkgdir}/usr/share/icons/"
+    find unity-icon-theme/ -type f -exec install -Dm644 {} "${pkgdir}"/usr/share/icons/{} \;
+    install -m644 "${srcdir}/uvgl-icon-tango-22.png" "${pkgdir}/usr/share/icons/unity-icon-theme/places/22/distributor-logo.png"
+    install -m644 "${srcdir}/uvgl-icon-tango-24.png" "${pkgdir}/usr/share/icons/unity-icon-theme/places/24/distributor-logo.png"
+
+    # From debian/rules
+    for i in $(find "${pkgdir}/usr/share/icons" -mindepth 2 -maxdepth 2 -type d); do
+        cd "${i}"
+        for j in *; do
+            /usr/lib/icon-naming-utils/icon-name-mapping -c "${j}"
+        done
+    done
+}

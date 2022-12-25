@@ -1,0 +1,62 @@
+# Maintainer:  Rudra Saraswat <rs2009[at]ubuntu[dot]com>
+# Contributor: Robin Candau <robincandau[at]protonmail[dot]com>
+# Contributor: Xiao-Long Chen <chenxiaolong@cxl.epac.to>
+# Contributor: György Balló <ballogy@freestart.hu>
+# Contributor: thn81 <root@scrat>
+
+pkgname=bamf-ubuntu
+pkgver=0.5.6+22.04.20220217_0ubuntu1
+_pkgver="${pkgver//_*ubuntu*/}"
+pkgrel=1
+pkgdesc="Removes the headache of applications matching into a simple DBus daemon and c wrapper library"
+arch=(i686 x86_64)
+url="https://launchpad.net/bamf"
+license=(LGPL3)
+groups=(unity)
+depends=(libgtop libwnck3 glib2 hicolor-icon-theme libdbusmenu-gtk3 procps-ng
+         startup-notification python-lxml)
+makedepends=(gnome-common gobject-introspection gtk-doc libxml2 libxslt vala)
+provides=("bamf=${pkgver}")
+conflicts=(bamf)
+replaces=(bamf)
+install=${pkgname}.install
+source=("https://launchpad.net/ubuntu/+archive/primary/+files/bamf_${_pkgver}.orig.tar.gz"
+        0001-Remove-lxml-check.patch
+        update-bamf-index.hook
+        update-bamf-index.pl
+        update-bamf-index.sh)
+sha256sums=('d0460f1c0ad7fd797e1b34696740a38ffb6152664e07368a0f25f1505eee7ede'
+            '753ff28eb66fab4976e168a5ee63312204b8961404c9ebbb2ba08273ded5498c'
+            '657cfb55f4202f938b11dc55b7674fb2e1accd2a65e6fbab1bd5886c909dd629'
+            '8988fead948f7584eaf18de9f73532bbc9804eba9332984a14ccca01466d9903'
+            '0599249f3654bb8e458db9b85f7fd53d41450833bc18462b3ccf950575d33265')
+
+prepare() {
+    patch -p1 -i 0001-Remove-lxml-check.patch
+
+    sed -i 's/-Werror/-Wno-error/g' configure.ac
+}
+
+build() {
+    gtkdocize
+    autoreconf -vfi
+
+    ./configure \
+        --prefix=/usr \
+        --libexecdir=/usr/lib \
+        --disable-static \
+        --enable-gtk-doc \
+        --enable-export-actions-menu=yes
+
+    make
+}
+
+package() {
+    make DESTDIR="${pkgdir}" install
+
+    install -Dm 755 ../update-bamf-index.pl "${pkgdir}/usr/lib/bamf/update-bamf-index.pl"
+    install -Dm 755 ../update-bamf-index.sh "${pkgdir}/usr/lib/bamf/update-bamf-index.sh"
+    install -Dm 644 ../update-bamf-index.hook "${pkgdir}/usr/share/libalpm/hooks/update-bamf-index.hook"
+
+    rm -rv "${pkgdir}"/usr/share/upstart/
+}
