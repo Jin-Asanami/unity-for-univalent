@@ -2,9 +2,15 @@
 
 ありがとう、Unityメンテナーチーム。
 
-Unityは「univalent-stable」リポジトリで利用可能です。
+以下の行を/etc/pacman.conf[core]の前に追記する。
 
-Unityを導入する:
+```
+   [unity-stable]
+   Include = /etc/pacman.d/univalent-mirrorlist
+```
+
+
+Unityを導入する。
 
 ```
    sudo pacman -Syyuu && sudo pacman -S unity-meta"

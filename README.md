@@ -2,7 +2,14 @@
 
 Thanks, Unity Maintainers Team.
 
-Unity is available in the "univalent-stable" repository.
+## Installing Unity 7 on UVGL
+
+Insert the following lines above [core] in /etc/pacman.conf:
+
+```
+   [unity-stable]
+   Include = /etc/pacman.d/univalent-mirrorlist
+```
 
 Install Unity:
 
