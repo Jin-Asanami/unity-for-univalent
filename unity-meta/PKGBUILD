@@ -3,7 +3,7 @@
 
 pkgname=unity-meta
 pkgver=1
-pkgrel=9
+pkgrel=11
 pkgdesc='Metapackage for Unity on UVGL'
 url='https://unity.ubuntuunity.org'
 arch=('any')
@@ -14,8 +14,8 @@ depends=(
   indicator-power indicator-session indicator-appmenu indicator-datetime indicator-messages
   indicator-printers indicator-sound lightdm-ubuntu lightdm-unity-greeter gtk3-ubuntu
   unity-scope-home unity-lens-applications unity-lens-files unity-lens-music unity-lens-photos
-  unity-lens-video unity-settings unity-indicator-appearance gnome-terminal bluez firefox nemo
-  libreoffice unity-tweak-tool gnome-screenshot l3afpad-budlabs eom atril xf86-input-synaptics engrampa
+  unity-lens-video unity-settings unity-indicator-appearance gnome-terminal bluez floorp nemo
+  libreoffice unity-tweak-tool gnome-screenshot l3afpad eom atril xf86-input-synaptics engrampa
   zeitgeist-ubuntu unity-settings-daemon gnome-settings-daemon-ubuntu gsettings-desktop-schemas-ubuntu
   gsettings-ubuntu-schemas gtk3-ubuntu lightdm-ubuntu unity-gtk-module
 )
